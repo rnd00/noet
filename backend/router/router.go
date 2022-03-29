@@ -14,8 +14,8 @@ type router struct {
 }
 
 type Router interface {
-	SetPort(pn int) error
 	SetDebug(opt bool)
+	SetPort(pn int) error
 	Invoke()
 	Run() error
 }
@@ -24,6 +24,16 @@ func NewRouter() Router {
 	return &router{
 		Port: ":8050",
 	}
+}
+
+func (r *router) SetDebug(opt bool) { r.Debug = opt }
+
+func (r *router) SetPort(pn int) error {
+	if pn < 0 || pn > 65535 {
+		return errors.New("input port number is out of range")
+	}
+	r.Port = fmt.Sprintf(":%d", pn)
+	return nil
 }
 
 func (r *router) Invoke() {
@@ -39,8 +49,6 @@ func (r *router) Invoke() {
 	r.Engine = g
 }
 
-func (r *router) SetDebug(opt bool) { r.Debug = opt }
-
 func (r *router) Run() error {
 	if r.Port == "" {
 		// switch to default port
@@ -51,12 +59,4 @@ func (r *router) Run() error {
 	}
 
 	return r.Engine.Run(r.Port)
-}
-
-func (r *router) SetPort(pn int) error {
-	if pn < 0 || pn > 65535 {
-		return errors.New("input port number is out of range")
-	}
-	r.Port = fmt.Sprintf(":%d", pn)
-	return nil
 }
