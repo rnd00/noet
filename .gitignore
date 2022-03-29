@@ -1,1 +1,3 @@
-temp
+backend/tmp
+/docker-compose.yml
+/Dockerfile
