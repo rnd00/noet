@@ -1,3 +1,4 @@
 backend/tmp
+tmp
 /docker-compose.yml
 /Dockerfile
