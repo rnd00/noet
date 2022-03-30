@@ -40,7 +40,7 @@ func main() {
 	pf := parseflag()
 
 	h := router.NewHandler()
-	h.SetupMuxer("/testwrite", controllers.TestWrite)
+	h.SetupMuxer(router.GET, "/testwrite", controllers.TestWrite)
 	httpHandler := h.ReturnHttpHandler()
 
 	r := router.NewRoutern()

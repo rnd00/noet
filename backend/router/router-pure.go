@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+const (
+	GET    = "GET"
+	POST   = "POST"
+	PUT    = "PUT"
+	PATCH  = "PATCH"
+	DELETE = "DELETE"
+)
+
 // router
 
 type routern struct {
@@ -83,13 +91,20 @@ func (r *routern) Run() error {
 // (local struct) handler -> (interface) http.Handler
 
 type handler struct {
-	Mux map[string]func(http.ResponseWriter, *http.Request)
+	Get    map[string]func(http.ResponseWriter, *http.Request)
+	Post   map[string]func(http.ResponseWriter, *http.Request)
+	Put    map[string]func(http.ResponseWriter, *http.Request)
+	Patch  map[string]func(http.ResponseWriter, *http.Request)
+	Delete map[string]func(http.ResponseWriter, *http.Request)
 }
 
 func NewHandler() *handler {
-	newMux := make(map[string]func(http.ResponseWriter, *http.Request))
 	newHandler := &handler{
-		Mux: newMux,
+		Get:    make(map[string]func(http.ResponseWriter, *http.Request)),
+		Post:   make(map[string]func(http.ResponseWriter, *http.Request)),
+		Put:    make(map[string]func(http.ResponseWriter, *http.Request)),
+		Patch:  make(map[string]func(http.ResponseWriter, *http.Request)),
+		Delete: make(map[string]func(http.ResponseWriter, *http.Request)),
 	}
 	return newHandler
 }
@@ -99,14 +114,39 @@ func (h *handler) ReturnHttpHandler() http.Handler {
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h, ok := h.Mux[r.URL.String()]; ok {
-		h(w, r)
-		return
+	switch r.Method {
+	case http.MethodGet:
+		if h, ok := h.Get[r.URL.String()]; ok {
+			h(w, r)
+			return
+		}
+	case http.MethodPost:
+		if h, ok := h.Post[r.URL.String()]; ok {
+			h(w, r)
+			return
+		}
+	case http.MethodPut:
+		if h, ok := h.Put[r.URL.String()]; ok {
+			h(w, r)
+			return
+		}
+	case http.MethodPatch:
+		if h, ok := h.Patch[r.URL.String()]; ok {
+			h(w, r)
+			return
+		}
+	case http.MethodDelete:
+		if h, ok := h.Delete[r.URL.String()]; ok {
+			h(w, r)
+			return
+		}
 	}
-	io.WriteString(w, "URL: "+r.URL.String())
+
+	// add error here later, 404 and such
+	io.WriteString(w, "METHOD: "+r.Method+"\nURL: "+r.URL.String())
 }
 
-func (h *handler) SetupMuxer(path string, function func(http.ResponseWriter, *http.Request)) error {
+func (h *handler) SetupMuxer(method, path string, function func(http.ResponseWriter, *http.Request)) error {
 	if path == "" {
 		return errors.New("invalid path, path is empty")
 	}
@@ -118,6 +158,21 @@ func (h *handler) SetupMuxer(path string, function func(http.ResponseWriter, *ht
 		return errors.New("invalid function, function parameter is empty")
 	}
 
-	h.Mux[path] = function
+	if method == "" {
+		return errors.New("invalid method; needs to be `GET` or `POST` or `PUT` or `PATCH` or `DELETE`")
+	}
+
+	switch method {
+	case "GET":
+		h.Get[path] = function
+	case "POST":
+		h.Post[path] = function
+	case "PUT":
+		h.Put[path] = function
+	case "PATCH":
+		h.Patch[path] = function
+	case "DELETE":
+		h.Delete[path] = function
+	}
 	return nil
 }
