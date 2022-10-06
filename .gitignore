@@ -2,3 +2,4 @@ backend/tmp
 tmp
 /docker-compose.yml
 /Dockerfile
+noet.md
